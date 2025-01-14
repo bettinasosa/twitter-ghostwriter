@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { generateNewTweet } from "../actions/generate-tweet"
 import { toast } from "@/components/ui/use-toast"
 import {
@@ -61,9 +59,12 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
       console.log("Client: Starting tweet generation")
       const newTweet = await generateNewTweet(userInterests, selectedTweetType)
       console.log("Client: Received new tweet:", newTweet)
+      if (!newTweet) {
+        throw new Error("Failed to generate tweet")
+      }
       addTweet({
-        id: (tweets.length + 1).toString(),
-        ...newTweet
+        ...newTweet,
+        id: (tweets.length + 1).toString()
       })
       toast({
         title: "New tweet generated",

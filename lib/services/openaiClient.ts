@@ -1,25 +1,24 @@
-import OpenAI from 'openai';
-import { config } from "@/config";
+import OpenAI from "openai"
+import { config } from "@/config"
 
 class OpenAIClient {
-  public client: OpenAI;
+  public client: OpenAI
 
   constructor() {
     if (!config.openAI.apiKey) {
-      console.error('OpenAI API key is missing');
-      throw new Error('OpenAI API key is required');
+      console.error("OpenAI API key is missing")
+      throw new Error("OpenAI API key is required")
     }
 
     this.client = new OpenAI({
-      apiKey: config.openAI.apiKey,
-    });
+      apiKey: config.openAI.apiKey
+    })
 
     // Test the client initialization
     if (!this.client) {
-      throw new Error('Failed to initialize OpenAI client');
+      throw new Error("Failed to initialize OpenAI client")
     }
   }
 }
 
-export const openAIClient = new OpenAIClient();
-
+export const openAIClient = new OpenAIClient()
