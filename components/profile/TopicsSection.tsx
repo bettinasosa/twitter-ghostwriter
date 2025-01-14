@@ -17,37 +17,42 @@ import {
 } from "@/components/ui/popover"
 import { Plus, X } from "lucide-react"
 import { useState } from "react"
+import { useFormContext } from "react-hook-form"
 
 interface TopicsSectionProps {
-  topics: string[]
   availableTopics: string[]
-  onAddTopic: (topic: string) => void
-  onRemoveTopic: (topic: string) => void
 }
 
-export function TopicsSection({
-  topics = [],
-  availableTopics = [],
-  onAddTopic,
-  onRemoveTopic
-}: TopicsSectionProps) {
+export function TopicsSection({ availableTopics = [] }: TopicsSectionProps) {
+  const { watch, setValue } = useFormContext()
+  const topics = watch("topics")
   const [newTopic, setNewTopic] = useState("")
 
   const handleAddTopic = (topic: string) => {
-    onAddTopic(topic)
-    setNewTopic("")
+    if (topic && !topics.includes(topic)) {
+      setValue("topics", [...topics, topic], { shouldValidate: true })
+      setNewTopic("")
+    }
+  }
+
+  const handleRemoveTopic = (topicToRemove: string) => {
+    setValue(
+      "topics",
+      topics.filter((t: string) => t !== topicToRemove),
+      { shouldValidate: true }
+    )
   }
 
   return (
     <div className="space-y-4">
       <Label>Topics of expertise</Label>
       <div className="flex flex-wrap gap-2 mb-2">
-        {topics.map(topic => (
+        {topics.map((topic: string) => (
           <Badge key={topic} variant="secondary" className="gap-1">
             {topic}
             <button
               type="button"
-              onClick={() => onRemoveTopic(topic)}
+              onClick={() => handleRemoveTopic(topic)}
               className="ml-1 hover:text-destructive"
             >
               <X className="h-3 w-3" />

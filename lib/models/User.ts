@@ -14,30 +14,31 @@ export type Tweet = z.infer<typeof TweetSchema>
 
 export const UserInterestsSchema = z.object({
   topics: z.array(z.string()),
-  description: z.string(),
   tones: z.array(z.string()),
   audience: z.string(),
   goals: z.array(z.string()),
   postingFrequency: z.string(),
   aiPersona: z.string(),
   aiBackstory: z.string(),
-  writingStyle: z.string(),
-  humorLevel: z.number(),
+  humorLevel: z.number().min(0).max(100),
   emojiUsage: z.enum(["none", "minimal", "moderate", "liberal"]),
-  hashtagPreference: z.enum(["none", "few", "moderate", "many"]),
-  twitterHandle: z.string().optional(),
-  preferredWritingStyles: z.array(z.string())
+  hashtagPreference: z.enum(["none", "minimal", "moderate", "liberal"]),
+  preferredWritingStyles: z.array(z.string()),
+  twitterHandle: z.string()
 })
-export type UserInterests = z.infer<typeof UserInterestsSchema>
 
-// User schema
+// Update User schema to include auth fields
 export const UserSchema = z.object({
+  _id: z.string(),
   email: z.string().email(),
-  name: z.string().optional(),
-  image: z.string().optional(),
-  tweets: z.array(TweetSchema).optional(),
-  savedTweets: z.array(TweetSchema).optional(),
-  scheduledTweets: z.array(TweetSchema).optional(),
-  userInterests: UserInterestsSchema.optional()
+  password: z.string(),
+  created_at: z.date(),
+  updated_at: z.date(),
+  userInterests: UserInterestsSchema.nullable()
 })
+
+export type UserInterests = z.infer<typeof UserInterestsSchema>
 export type User = z.infer<typeof UserSchema>
+
+// Helper type for creating a new user
+export type CreateUserInput = Omit<User, '_id' | 'created_at' | 'updated_at'>

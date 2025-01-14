@@ -9,77 +9,74 @@ import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
 import { useAppContext } from "@/lib/AppContext"
 import { useToast } from "@/components/ui/use-toast"
 import { ToastAction } from "@/components/ui/toast"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { suggestedTopics } from "@/lib/mock-data"
-import { ProfileHeader } from "@/components/profile/ProfileHeader"
+import { PageHeader } from "@/components/PageHeader"
 import { BasicInfo } from "@/components/profile/BasicInfo"
 import { TopicsSection } from "@/components/profile/TopicsSection"
+import { TonesSection } from "@/components/profile/TonesSection"
+import { WritingStyleSection } from "@/components/profile/WritingStyleSection"
+import { GoalsSection } from "@/components/profile/GoalsSection"
+import { AIPersonaSection } from "@/components/profile/AIPersonaSection"
+import { UserInterests, UserInterestsSchema } from "@/lib/models/User"
+import { useForm, FormProvider } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+const DEFAULT_USER_INTERESTS: UserInterests = {
+  topics: [],
+  tones: [],
+  audience: "",
+  goals: [],
+  postingFrequency: "",
+  aiPersona: "",
+  aiBackstory: "",
+  humorLevel: 50,
+  emojiUsage: "minimal",
+  hashtagPreference: "moderate",
+  preferredWritingStyles: [],
+  twitterHandle: ""
+}
 
 export default ProfileRequiredRoute(function AccountPage() {
-  const { userInterests, setUserInterests, setIsProfileComplete } =
-    useAppContext()
-  const [availableTopics, setAvailableTopics] = useState<string[]>([])
-  const [isSaving, setIsSaving] = useState(false)
+  const {
+    userInterests,
+    setUserInterests,
+    setIsProfileComplete,
+    saveUserToDb
+  } = useAppContext()
   const { toast } = useToast()
   const { user } = useAuth()
   const router = useRouter()
 
-  // Initialize userInterests with default values if null
+  const methods = useForm<UserInterests>({
+    resolver: zodResolver(UserInterestsSchema),
+    defaultValues: DEFAULT_USER_INTERESTS
+  })
+
+  const { handleSubmit, reset } = methods
+
+  // Initialize form with existing data
   useEffect(() => {
-    if (!userInterests) {
-      setUserInterests({
-        topics: [],
-        description: "",
-        tones: [],
-        audience: "",
-        goals: [],
-        postingFrequency: "",
-        aiPersona: "",
-        aiBackstory: "",
-        writingStyle: "",
-        humorLevel: 50,
-        emojiUsage: "minimal",
-        hashtagPreference: "moderate",
-        preferredWritingStyles: []
-      })
-    }
-  }, [userInterests, setUserInterests])
-
-  useEffect(() => {
-    setAvailableTopics(suggestedTopics || [])
-  }, [])
-
-  const addTopic = (topic: string) => {
-    if (topic && userInterests && !userInterests.topics.includes(topic)) {
-      setUserInterests(prev => ({
-        ...prev!,
-        topics: [...prev!.topics, topic]
-      }))
-    }
-  }
-
-  const removeTopic = (topicToRemove: string) => {
     if (userInterests) {
-      setUserInterests(prev => ({
-        ...prev!,
-        topics: prev!.topics.filter(t => t !== topicToRemove)
-      }))
+      reset(userInterests)
     }
-  }
+  }, [userInterests, reset])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-
+  const onSubmit = async (data: UserInterests) => {
     if (!user) {
       router.push("/login")
       return
     }
 
     try {
-      // Your save logic here
+      await saveUserToDb({
+        email: user.email,
+        userInterests: data
+      })
+
+      setUserInterests(data)
       setIsProfileComplete(true)
-      setIsSaving(false)
+
       toast({
         title: "Profile saved successfully!",
         description: "Your changes have been saved.",
@@ -93,58 +90,49 @@ export default ProfileRequiredRoute(function AccountPage() {
           "An error occurred while saving your profile. Please try again.",
         variant: "destructive"
       })
-      setIsSaving(false)
     }
   }
 
-  if (!userInterests) {
+  if (!user) {
     return <div>Loading...</div>
   }
 
   return (
     <div className="min-h-screen bg-yellow-50/40 pt-24">
-      <form
-        onSubmit={handleSubmit}
-        className={`${GeistSans.className} p-6 max-w-[1400px] mx-auto bg-white/80 backdrop-blur-md rounded-lg border border-white/20 shadow-xl`}
-      >
-        <ProfileHeader />
+      <FormProvider {...methods}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={`${GeistSans.className} p-6 max-w-[1400px] mx-auto bg-white/80 backdrop-blur-md rounded-lg border border-white/20 shadow-xl`}
+        >
+          <PageHeader
+            title="Profile Settings"
+            description="Customize your AI writing assistant's voice and style"
+          />
+          <div className="space-y-6">
+            <Card className="border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-2xl font-medium">
+                  Profile Configuration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <BasicInfo user={user} />
+                <TopicsSection availableTopics={suggestedTopics} />
+                <TonesSection />
+                <WritingStyleSection />
+                <GoalsSection />
+                <AIPersonaSection />
+              </CardContent>
+            </Card>
+          </div>
 
-        <div className="space-y-6">
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl font-medium">
-                Profile Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <BasicInfo
-                user={user}
-                userInterests={userInterests}
-                setUserInterests={setUserInterests}
-              />
-
-              <TopicsSection
-                topics={userInterests.topics}
-                availableTopics={availableTopics}
-                onAddTopic={addTopic}
-                onRemoveTopic={removeTopic}
-              />
-
-              {/* Add other sections as components */}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-6">
-          <Button
-            type="submit"
-            disabled={isSaving}
-            className="h-11 px-8 text-base"
-          >
-            {isSaving ? "Saving..." : "Save Profile"}
-          </Button>
-        </div>
-      </form>
+          <div className="mt-6">
+            <Button type="submit" className="h-11 px-8 text-base">
+              Save Profile
+            </Button>
+          </div>
+        </form>
+      </FormProvider>
     </div>
   )
 })
