@@ -1,0 +1,22 @@
+export const suggestedTopics = [
+  "Artificial Intelligence",
+  "Machine Learning",
+  "Web Development",
+  "Frontend Development",
+  "Backend Development",
+  "Cloud Computing",
+  "DevOps",
+  "Cybersecurity",
+  "Blockchain",
+  "Mobile Development",
+  "UI/UX Design",
+  "Product Management",
+  "Startups",
+  "Technology",
+  "Software Architecture",
+  "Data Science",
+  "Programming Languages",
+  "Open Source",
+  "Career Growth",
+  "Tech Industry"
+]
