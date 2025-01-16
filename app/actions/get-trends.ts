@@ -2,12 +2,8 @@
 
 import { TwitterApi } from "twitter-api-v2"
 
-const twitterClient = new TwitterApi({
-  appKey: process.env.TWITTER_API_KEY!,
-  appSecret: process.env.TWITTER_API_SECRET!,
-  accessToken: process.env.TWITTER_ACCESS_TOKEN,
-  accessSecret: process.env.TWITTER_ACCESS_SECRET
-})
+// Create a client with only bearer token for app-only auth
+const twitterClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN!)
 
 export interface TrendingTopic {
   category?: string
@@ -24,19 +20,25 @@ interface TwitterTrend {
 
 export async function fetchTrendingTopics(): Promise<TrendingTopic[]> {
   try {
-    const response = await twitterClient.v2.get("trends/available", {
-      max_trends: 50
+    console.log("Fetching trends with bearer token:", process.env.TWITTER_BEARER_TOKEN?.slice(0, 10) + "...")
+    
+    // Using v1.1 endpoint for worldwide trends (woeid: 1)
+    const response = await twitterClient.v1.get('trends/place.json', {
+      id: '1' // 1 is the woeid for worldwide
     })
+    console.log("Twitter API response:", response)
 
-    if (response.data) {
-      return response.data.map((trend: TwitterTrend) => ({
+    if (response?.[0]?.trends) {
+      return response[0].trends.map((trend: TwitterTrend) => ({
         trend_name: trend.name,
         post_count: trend.tweet_volume
       }))
     }
+    
+    console.log("No trends found in response")
     return []
   } catch (error) {
-    console.error("Error fetching trends:", error)
+    console.error("Detailed error fetching trends:", error)
     return []
   }
 }
