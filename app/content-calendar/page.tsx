@@ -11,12 +11,11 @@ import { useAuth } from "@/lib/AuthContext"
 import { useTweets } from "@/lib/TweetsContext"
 import Link from "next/link"
 import { GeistSans } from "geist/font/sans"
-import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
 import { ScheduledTweet } from "@/lib/models/Schedule"
 import { getScheduledTweets, scheduleNewTweet, removeScheduledTweet } from "../actions/schedule"
 import { toast } from "@/components/ui/use-toast"
 
-export default ProfileRequiredRoute(function ContentCalendarPage() {
+export default function ContentCalendarPage() {
   const { user } = useAuth()
   const { savedTweets, unsaveTweet } = useTweets()
   const [scheduledTweets, setScheduledTweets] = useState<ScheduledTweet[]>([])
@@ -224,4 +223,4 @@ export default ProfileRequiredRoute(function ContentCalendarPage() {
       </div>
     </div>
   )
-})
+}

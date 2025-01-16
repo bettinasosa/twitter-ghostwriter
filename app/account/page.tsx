@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { GeistSans } from "geist/font/sans"
 import { useAuth } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
-import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
 import { useAppContext } from "@/lib/AppContext"
 import { useToast } from "@/components/ui/use-toast"
 import { ToastAction } from "@/components/ui/toast"
@@ -42,7 +41,7 @@ const DEFAULT_USER_INTERESTS: UserInterests = {
   twitterHandle: ""
 }
 
-export default ProfileRequiredRoute(function AccountPage() {
+export default function AccountPage() {
   const {
     userInterests,
     setUserInterests,
@@ -164,4 +163,4 @@ export default ProfileRequiredRoute(function AccountPage() {
       </FormProvider>
     </div>
   )
-})
+}

@@ -35,7 +35,7 @@ import { GeistSans } from "geist/font/sans"
 import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
 import { fetchTrendingTopics, TrendingTopic } from "../actions/get-trends"
 
-export default ProfileRequiredRoute(function GhostWriterPage() {
+export default function GhostWriterPage() {
   const { userInterests } = useAppContext()
   const { tweets, savedTweets, addTweet, deleteTweet, saveTweet, unsaveTweet } =
     useTweets()
@@ -47,7 +47,6 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
     "short-form" | "thread" | "long-form"
   >("short-form")
   const [trends, setTrends] = useState<TrendingTopic[]>([])
-  const [selectedTrend, setSelectedTrend] = useState<TrendingTopic | null>(null)
 
   useEffect(() => {
     const loadTrends = async () => {
@@ -340,4 +339,4 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
       </div>
     </div>
   )
-})
+}

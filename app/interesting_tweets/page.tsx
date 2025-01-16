@@ -6,9 +6,8 @@ import { TweetEmbed } from "@/components/tweet-embed"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
-import { ProfileRequiredRoute } from '@/components/ProtectedRoute'
 
-export default ProfileRequiredRoute(function InterestingTweetsPage() {
+export default function InterestingTweetsPage() {
   const [tweets, setTweets] = useState<string[]>([])
   const [newTweetUrl, setNewTweetUrl] = useState('')
 
@@ -57,5 +56,5 @@ export default ProfileRequiredRoute(function InterestingTweetsPage() {
       </div>
     </div>
   )
-})
+}
 

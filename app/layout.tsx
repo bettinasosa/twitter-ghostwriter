@@ -1,32 +1,44 @@
 "use client"
 
-import { AuthProvider } from "@/lib/AuthContext"
-import { AppProvider } from "@/lib/AppContext"
-import { MainNavbar } from "@/components/MainNavbar"
-import { GeistSans } from "geist/font/sans"
-import "./globals.css"
-import { SessionProvider } from "next-auth/react"
-import { TweetsProvider } from "@/lib/TweetsContext"
+import { useAuth } from "@/lib/AuthContext"
+import { useRouter, usePathname } from "next/navigation"
+import { useEffect } from "react"
+import { useAppContext } from "@/lib/AppContext"
 
 export default function RootLayout({
   children
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <html lang="en">
-      <body className={`${GeistSans.className} antialiased`}>
-        <SessionProvider>
-          <AuthProvider>
-            <AppProvider>
-              <TweetsProvider>
-                <MainNavbar />
-                <main className="min-h-screen">{children}</main>
-              </TweetsProvider>
-            </AppProvider>
-          </AuthProvider>
-        </SessionProvider>
-      </body>
-    </html>
-  )
+  const { user, isLoggedIn } = useAuth()
+  const { userInterests, isLoading } = useAppContext()
+  const router = useRouter()
+  const pathname = usePathname()
+  
+  useEffect(() => {
+    if (isLoading) return
+
+    const publicPaths = ["/", "/login", "/signup"]
+    const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+
+    if (!isLoggedIn && !isPublicPath) {
+      router.push("/login")
+      return
+    }
+
+    if (isLoggedIn && user?.email) {
+      const hasProfile = !!userInterests
+      
+      if (!hasProfile && pathname !== "/account") {
+        router.push("/account")
+        return
+      }
+
+      if (hasProfile && pathname === "/") {
+        router.push("/ghost-writer")
+      }
+    }
+  }, [isLoggedIn, pathname, router, user, userInterests, isLoading])
+
+  return <>{children}</>
 }
