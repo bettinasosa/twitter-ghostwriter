@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
+import { LoadingSpinner } from "@/components/ui/loading"
 
 interface AuthFormProps {
   mode: 'login' | 'signup'
   onSubmit: (email: string, password: string) => Promise<void>
+  isLoading?: boolean
 }
 
-export function AuthForm({ mode, onSubmit }: AuthFormProps) {
+export function AuthForm({ mode, onSubmit, isLoading }: AuthFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -73,8 +75,19 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              {mode === 'login' ? 'Log In' : 'Sign Up'}
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <LoadingSpinner className="mr-2 h-4 w-4" />
+                  {mode === "login" ? "Logging in..." : "Signing up..."}
+                </>
+              ) : (
+                mode === "login" ? "Log in" : "Sign up"
+              )}
             </Button>
           </form>
         </CardContent>

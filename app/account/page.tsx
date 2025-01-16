@@ -9,7 +9,7 @@ import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
 import { useAppContext } from "@/lib/AppContext"
 import { useToast } from "@/components/ui/use-toast"
 import { ToastAction } from "@/components/ui/toast"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { suggestedTopics } from "@/lib/mock-data"
 import { PageHeader } from "@/components/PageHeader"
 import { BasicInfo } from "@/components/profile/BasicInfo"
@@ -21,6 +21,8 @@ import { AIPersonaSection } from "@/components/profile/AIPersonaSection"
 import { UserInterests, UserInterestsSchema } from "@/lib/models/User"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { LoadingSpinner } from "@/components/ui/loading"
+
 const DEFAULT_USER_INTERESTS: UserInterests = {
   topics: [],
   tones: [],
@@ -35,6 +37,7 @@ const DEFAULT_USER_INTERESTS: UserInterests = {
   preferredWritingStyles: [],
   twitterHandle: ""
 }
+
 export default ProfileRequiredRoute(function AccountPage() {
   const {
     userInterests,
@@ -60,12 +63,15 @@ export default ProfileRequiredRoute(function AccountPage() {
     }
   }, [userInterests, reset])
 
+  const [isSaving, setIsSaving] = useState(false)
+
   const onSubmit = async (data: UserInterests) => {
     if (!user) {
       router.push("/login")
       return
     }
 
+    setIsSaving(true)
     try {
       await saveUserToDb({
         email: user.email,
@@ -88,8 +94,11 @@ export default ProfileRequiredRoute(function AccountPage() {
           "An error occurred while saving your profile. Please try again.",
         variant: "destructive"
       })
+    } finally {
+      setIsSaving(false)
     }
   }
+
   if (!user) {
     return <div>Loading...</div>
   }
@@ -124,8 +133,19 @@ export default ProfileRequiredRoute(function AccountPage() {
           </div>
 
           <div className="mt-6">
-            <Button type="submit" className="h-11 px-8 text-base">
-              Save Profile
+            <Button
+              type="submit"
+              className="h-11 px-8 text-base"
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <LoadingSpinner className="mr-2 h-4 w-4" />
+                  Saving...
+                </>
+              ) : (
+                "Save Profile"
+              )}
             </Button>
           </div>
         </form>

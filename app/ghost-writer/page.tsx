@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   Card,
@@ -23,7 +23,8 @@ import {
   PenTool,
   AlignLeft,
   Hash,
-  List
+  List,
+  TrendingUp
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
@@ -32,27 +33,61 @@ import { useTweets } from "@/lib/TweetsContext"
 import { Tweet } from "@/lib/models/Tweet"
 import { GeistSans } from "geist/font/sans"
 import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
-import { PageHeader } from "@/components/PageHeader"
+import {
+  getBestAvailableTrends,
+  TrendingTopic
+} from "@/lib/services/twitterClient"
 
 export default ProfileRequiredRoute(function GhostWriterPage() {
   const { userInterests } = useAppContext()
-  const { tweets, savedTweets, addTweet, deleteTweet, saveTweet, unsaveTweet } = useTweets()
+  const { tweets, savedTweets, addTweet, deleteTweet, saveTweet, unsaveTweet } =
+    useTweets()
   const [isLoading, setIsLoading] = useState(false)
+  const [isTrendsLoading, setIsTrendsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSaved, setShowSaved] = useState(false)
   const [selectedTweetType, setSelectedTweetType] = useState<
     "short-form" | "thread" | "long-form"
   >("short-form")
+  const [trends, setTrends] = useState<TrendingTopic[]>([])
+  const [selectedTrend, setSelectedTrend] = useState<TrendingTopic | null>(null)
 
-  const handleGenerateNewTweet = async () => {
+  useEffect(() => {
+    const loadTrends = async () => {
+      setIsTrendsLoading(true)
+      try {
+        const trendingTopics = await getBestAvailableTrends()
+        setTrends(trendingTopics)
+      } catch (error) {
+        console.error("Error loading trends:", error)
+        toast({
+          title: "Error loading trends",
+          description: "Unable to load trending topics",
+          variant: "destructive"
+        })
+      } finally {
+        setIsTrendsLoading(false)
+      }
+    }
+
+    loadTrends()
+  }, [])
+
+  const handleGenerateNewTweet = async (trend?: TrendingTopic) => {
     setIsLoading(true)
     setError(null)
     try {
-      const newTweet = await generateNewTweet(userInterests, selectedTweetType)
+      const newTweet = await generateNewTweet(
+        userInterests,
+        selectedTweetType,
+        trend?.trend_name
+      )
       addTweet(newTweet)
       toast({
         title: "New tweet generated",
-        description: "A new tweet has been added to your list."
+        description: trend
+          ? `Generated tweet about "${trend.trend_name}"`
+          : "A new tweet has been added to your list."
       })
     } catch (error) {
       const errorMessage =
@@ -197,6 +232,42 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
           </Alert>
         )}
 
+        {/* Trending Topics Section */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-medium">Trending Topics</h2>
+            {isTrendsLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
+          {trends.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {trends.map((trend, index) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="px-3 py-1 cursor-pointer hover:bg-secondary/80"
+                  onClick={() => handleGenerateNewTweet(trend)}
+                >
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  {trend.trend_name}
+                  {trend.post_count && (
+                    <span className="ml-2 text-xs opacity-70">
+                      {Intl.NumberFormat("en", { notation: "compact" }).format(
+                        Number(trend.post_count)
+                      )}
+                    </span>
+                  )}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            !isTrendsLoading && (
+              <p className="text-sm text-muted-foreground">
+                No trending topics available
+              </p>
+            )
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedTweets.map(tweet => (
             <Card key={tweet.id} className="flex flex-col border shadow-sm">
@@ -252,7 +323,7 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
                 </div>
                 {"savedAt" in tweet && (
                   <p className="text-xs text-muted-foreground">
-                    Saved {new Date(tweet.savedAt).toLocaleDateString()}
+                    Saved {new Date(tweet.savedAt as number).toLocaleDateString()}
                   </p>
                 )}
               </CardFooter>
