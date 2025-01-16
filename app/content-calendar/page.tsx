@@ -6,51 +6,97 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { format, startOfWeek, addDays, isSameDay } from "date-fns"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useAppContext } from "@/lib/AppContext"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { useAuth } from "@/lib/AuthContext"
+import { useTweets } from "@/lib/TweetsContext"
 import Link from "next/link"
 import { GeistSans } from "geist/font/sans"
 import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
-import { Tweet } from "@/lib/models/Tweet"
-
-interface ScheduledTweet extends Tweet {
-  scheduledDate: Date
-}
+import { ScheduledTweet } from "@/lib/models/Schedule"
+import { getScheduledTweets, scheduleNewTweet, removeScheduledTweet } from "../actions/schedule"
+import { toast } from "@/components/ui/use-toast"
 
 export default ProfileRequiredRoute(function ContentCalendarPage() {
-  const { savedTweets, setSavedTweets } = useAppContext()
+  const { user } = useAuth()
+  const { savedTweets, unsaveTweet } = useTweets()
   const [scheduledTweets, setScheduledTweets] = useState<ScheduledTweet[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
     startOfWeek(new Date())
   )
 
   useEffect(() => {
-    const storedScheduledTweets = JSON.parse(
-      localStorage.getItem("scheduledTweets") || "[]"
-    )
-    setScheduledTweets(
-      storedScheduledTweets.map((tweet: ScheduledTweet) => ({
-        ...tweet,
-        scheduledDate: new Date(tweet.scheduledDate)
-      }))
-    )
-  }, [])
-
-  const handleScheduleTweet = (tweet: Tweet, date: Date) => {
-    const scheduledTweet: ScheduledTweet = {
-      ...tweet,
-      scheduledDate: date
+    const loadScheduledTweets = async () => {
+      if (!user?.email) return
+      try {
+        const tweets = await getScheduledTweets(user.email)
+        setScheduledTweets(tweets)
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load scheduled tweets",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
+      }
     }
-    setScheduledTweets(prev => [...prev, scheduledTweet])
-    setSavedTweets(prev => prev.filter(t => t.id !== tweet.id))
 
-    localStorage.setItem(
-      "scheduledTweets",
-      JSON.stringify([...scheduledTweets, scheduledTweet])
-    )
-    localStorage.setItem(
-      "savedTweets",
-      JSON.stringify(savedTweets.filter(t => t.id !== tweet.id))
+    loadScheduledTweets()
+  }, [user?.email])
+
+  const handleScheduleTweet = async (tweet: Tweet, date: Date) => {
+    if (!user?.email) return
+
+    try {
+      const scheduledTweet: ScheduledTweet = {
+        ...tweet,
+        userId: user.email,
+        scheduledDate: date
+      }
+
+      await scheduleNewTweet(user.email, scheduledTweet)
+      setScheduledTweets(prev => [...prev, scheduledTweet])
+      unsaveTweet(tweet.id)
+
+      toast({
+        title: "Tweet scheduled",
+        description: "Your tweet has been scheduled successfully."
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to schedule tweet",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleRemoveScheduledTweet = async (tweetId: string) => {
+    if (!user?.email) return
+
+    try {
+      await removeScheduledTweet(user.email, tweetId)
+      setScheduledTweets(prev => prev.filter(t => t.id !== tweetId))
+      
+      toast({
+        title: "Tweet removed",
+        description: "The scheduled tweet has been removed."
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove scheduled tweet",
+        variant: "destructive"
+      })
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-yellow-50/40 pt-24 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     )
   }
 
@@ -118,12 +164,22 @@ export default ProfileRequiredRoute(function ContentCalendarPage() {
                       key={tweet.id}
                       className="mb-2 p-2 bg-secondary rounded-md"
                     >
-                      <Link
-                        href={`/tweet/${tweet.id}`}
-                        className="text-sm font-medium hover:underline"
-                      >
-                        {tweet.title}
-                      </Link>
+                      <div className="flex justify-between items-start">
+                        <Link
+                          href={`/tweet/${tweet.id}`}
+                          className="text-sm font-medium hover:underline"
+                        >
+                          {tweet.title}
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-destructive"
+                          onClick={() => handleRemoveScheduledTweet(tweet.id)}
+                        >
+                          ×
+                        </Button>
+                      </div>
                       <Badge className={cn("mt-1", getTagColor(tweet.type))}>
                         {tweet.type}
                       </Badge>

@@ -6,6 +6,7 @@ import { MainNavbar } from "@/components/MainNavbar"
 import { GeistSans } from "geist/font/sans"
 import "./globals.css"
 import { SessionProvider } from "next-auth/react"
+import { TweetsProvider } from "@/lib/TweetsContext"
 
 export default function RootLayout({
   children
@@ -18,8 +19,10 @@ export default function RootLayout({
         <SessionProvider>
           <AuthProvider>
             <AppProvider>
-              <MainNavbar />
-              <main className="min-h-screen">{children}</main>
+              <TweetsProvider>
+                <MainNavbar />
+                <main className="min-h-screen">{children}</main>
+              </TweetsProvider>
             </AppProvider>
           </AuthProvider>
         </SessionProvider>

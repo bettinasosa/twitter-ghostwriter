@@ -21,7 +21,6 @@ import { AIPersonaSection } from "@/components/profile/AIPersonaSection"
 import { UserInterests, UserInterestsSchema } from "@/lib/models/User"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-
 const DEFAULT_USER_INTERESTS: UserInterests = {
   topics: [],
   tones: [],
@@ -36,7 +35,6 @@ const DEFAULT_USER_INTERESTS: UserInterests = {
   preferredWritingStyles: [],
   twitterHandle: ""
 }
-
 export default ProfileRequiredRoute(function AccountPage() {
   const {
     userInterests,
@@ -92,7 +90,6 @@ export default ProfileRequiredRoute(function AccountPage() {
       })
     }
   }
-
   if (!user) {
     return <div>Loading...</div>
   }

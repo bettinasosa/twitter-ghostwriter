@@ -1,12 +1,11 @@
-import { z } from "zod"
+export interface Tweet {
+  id: string
+  title: string
+  content: string | string[]
+  type: "short-form" | "thread" | "long-form"
+  createdAt: number
+}
 
-export const TweetTypeSchema = z.enum(["short-form", "thread", "long-form"])
-export type TweetType = z.infer<typeof TweetTypeSchema>
-
-export const TweetSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  content: z.union([z.string(), z.array(z.string())]),
-  type: TweetTypeSchema
-})
-export type Tweet = z.infer<typeof TweetSchema>
+export interface SavedTweet extends Tweet {
+  savedAt: number
+}

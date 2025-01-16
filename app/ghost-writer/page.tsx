@@ -28,23 +28,15 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { useAppContext } from "@/lib/AppContext"
+import { useTweets } from "@/lib/TweetsContext"
 import { Tweet } from "@/lib/models/Tweet"
 import { GeistSans } from "geist/font/sans"
 import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
-
-interface SavedTweet extends Tweet {
-  savedAt: number
-}
+import { PageHeader } from "@/components/PageHeader"
 
 export default ProfileRequiredRoute(function GhostWriterPage() {
-  const {
-    userInterests,
-    tweets,
-    setTweets,
-    savedTweets,
-    setSavedTweets,
-    addTweet
-  } = useAppContext()
+  const { userInterests } = useAppContext()
+  const { tweets, savedTweets, addTweet, deleteTweet, saveTweet, unsaveTweet } = useTweets()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSaved, setShowSaved] = useState(false)
@@ -56,22 +48,13 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
     setIsLoading(true)
     setError(null)
     try {
-      console.log("Client: Starting tweet generation")
       const newTweet = await generateNewTweet(userInterests, selectedTweetType)
-      console.log("Client: Received new tweet:", newTweet)
-      if (!newTweet) {
-        throw new Error("Failed to generate tweet")
-      }
-      addTweet({
-        ...newTweet,
-        id: (tweets.length + 1).toString()
-      })
+      addTweet(newTweet)
       toast({
         title: "New tweet generated",
         description: "A new tweet has been added to your list."
       })
     } catch (error) {
-      console.error("Client: Error generating new tweet:", error)
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred"
       setError(errorMessage)
@@ -86,11 +69,7 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
   }
 
   const handleSaveTweet = (tweet: Tweet) => {
-    const savedTweet: SavedTweet = {
-      ...tweet,
-      savedAt: Date.now()
-    }
-    setSavedTweets(prev => [savedTweet, ...prev])
+    saveTweet(tweet)
     toast({
       title: "Tweet saved",
       description: "The tweet has been saved to your collection."
@@ -98,7 +77,7 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
   }
 
   const handleUnsaveTweet = (tweetId: string) => {
-    setSavedTweets(prev => prev.filter(tweet => tweet.id !== tweetId))
+    unsaveTweet(tweetId)
     toast({
       title: "Tweet removed",
       description: "The tweet has been removed from your saved collection."
@@ -106,8 +85,7 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
   }
 
   const handleDeleteTweet = (tweetId: string) => {
-    setTweets(prev => prev.filter(tweet => tweet.id !== tweetId))
-    setSavedTweets(prev => prev.filter(tweet => tweet.id !== tweetId))
+    deleteTweet(tweetId)
     toast({
       title: "Tweet deleted",
       description: "The tweet has been permanently deleted."
