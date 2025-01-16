@@ -33,10 +33,7 @@ import { useTweets } from "@/lib/TweetsContext"
 import { Tweet } from "@/lib/models/Tweet"
 import { GeistSans } from "geist/font/sans"
 import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
-import {
-  getBestAvailableTrends,
-  TrendingTopic
-} from "@/lib/services/twitterClient"
+import { fetchTrendingTopics, TrendingTopic } from "../actions/get-trends"
 
 export default ProfileRequiredRoute(function GhostWriterPage() {
   const { userInterests } = useAppContext()
@@ -56,7 +53,7 @@ export default ProfileRequiredRoute(function GhostWriterPage() {
     const loadTrends = async () => {
       setIsTrendsLoading(true)
       try {
-        const trendingTopics = await getBestAvailableTrends()
+        const trendingTopics = await fetchTrendingTopics()
         setTrends(trendingTopics)
       } catch (error) {
         console.error("Error loading trends:", error)
