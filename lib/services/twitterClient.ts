@@ -23,6 +23,11 @@ interface TwitterTrendResponse {
   tweet_count?: number
 }
 
+interface TrendResponse {
+  trend_name: string
+  tweet_count?: number
+}
+
 export async function getPersonalizedTrends(): Promise<TrendingTopic[]> {
   try {
     // Using v2 endpoint for personalized trends
@@ -50,7 +55,9 @@ export async function getPersonalizedTrends(): Promise<TrendingTopic[]> {
   }
 }
 
-export async function getTrendingTopics(woeid: number = 1): Promise<TrendingTopic[]> {
+export async function getTrendingTopics(
+  woeid: number = 1
+): Promise<TrendingTopic[]> {
   try {
     // Using v2 endpoint for general trends
     const response = await twitterClient.v2.get(`trends/by/woeid/${woeid}`, {
@@ -59,7 +66,7 @@ export async function getTrendingTopics(woeid: number = 1): Promise<TrendingTopi
     })
 
     if (response.data) {
-      return response.data.map(trend => ({
+      return response.data.map((trend: TrendResponse) => ({
         trend_name: trend.trend_name,
         post_count: trend.tweet_count
       }))
@@ -72,7 +79,9 @@ export async function getTrendingTopics(woeid: number = 1): Promise<TrendingTopi
 }
 
 // Function to get the best available trends
-export async function getBestAvailableTrends(userToken?: string): Promise<TrendingTopic[]> {
+export async function getBestAvailableTrends(
+  userToken?: string
+): Promise<TrendingTopic[]> {
   try {
     // If user is authenticated, try personalized trends first
     if (userToken) {

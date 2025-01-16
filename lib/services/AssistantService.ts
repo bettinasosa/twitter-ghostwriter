@@ -1,15 +1,21 @@
+"use server"
+
 import OpenAI from "openai"
 import Logger from "@/utils/logger"
 import { UserInterests } from "@/lib/models/User"
 
-export class AssistantService {
+class AssistantService {
+  // @ts-ignore
   private openai: OpenAI
   private assistantId: string | null = null
 
+
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    })
+    if (typeof window === 'undefined') { // Only initialize on server
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      })
+    }
   }
 
   async getOrCreateAssistant(
@@ -17,8 +23,8 @@ export class AssistantService {
     userInterests: UserInterests,
     fileIds: string[]
   ): Promise<string> {
+    'use server'
     try {
-      // Try to find existing assistant
       const assistantName = `Twitter Ghost Writer - ${userId}`
       const instructions = this.generateInstructions(userInterests)
 
@@ -28,11 +34,9 @@ export class AssistantService {
       )
 
       if (existingAssistant) {
-        this.assistantId = existingAssistant.id
         return existingAssistant.id
       }
 
-      // Create new assistant if none exists
       const assistant = await this.openai.beta.assistants.create({
         name: assistantName,
         instructions,
@@ -40,29 +44,20 @@ export class AssistantService {
         // @ts-ignore
         file_ids: fileIds,
         tools: [
-          {
-            type: "file_search" // Enable file reading
-          },
+          { type: "file_search" },
           {
             type: "function",
             function: {
               name: "generate_tweet",
-              description:
-                "Generate a new tweet based on user preferences and context",
+              description: "Generate a new tweet based on user preferences and context",
               parameters: {
                 type: "object",
                 properties: {
                   content: { type: "string" },
-                  type: {
-                    type: "string",
-                    enum: ["short-form", "thread", "long-form"]
-                  },
+                  type: { type: "string", enum: ["short-form", "thread", "long-form"] },
                   thinking: { type: "string" },
                   topics: { type: "array", items: { type: "string" } },
-                  suggested_hashtags: {
-                    type: "array",
-                    items: { type: "string" }
-                  }
+                  suggested_hashtags: { type: "array", items: { type: "string" } }
                 },
                 required: ["content", "type", "thinking"]
               }
@@ -71,7 +66,6 @@ export class AssistantService {
         ]
       })
 
-      this.assistantId = assistant.id
       return assistant.id
     } catch (error) {
       Logger.error("Failed to create/get assistant", error)

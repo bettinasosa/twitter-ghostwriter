@@ -9,7 +9,7 @@ import { ProfileRequiredRoute } from "@/components/ProtectedRoute"
 import { useAppContext } from "@/lib/AppContext"
 import { useToast } from "@/components/ui/use-toast"
 import { ToastAction } from "@/components/ui/toast"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { suggestedTopics } from "@/lib/mock-data"
 import { PageHeader } from "@/components/PageHeader"
 import { BasicInfo } from "@/components/profile/BasicInfo"
@@ -22,6 +22,10 @@ import { UserInterests, UserInterestsSchema } from "@/lib/models/User"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoadingSpinner } from "@/components/ui/loading"
+import { Upload, File as FileIcon, X } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { assistantService } from "@/lib/services/AssistantService"
+import { FileUploader } from "@/components/profile/FileUploader"
 
 const DEFAULT_USER_INTERESTS: UserInterests = {
   topics: [],
@@ -128,6 +132,14 @@ export default ProfileRequiredRoute(function AccountPage() {
                 <WritingStyleSection />
                 <GoalsSection />
                 <AIPersonaSection />
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Context Files</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Upload files to provide additional context for your AI
+                    assistant. Supported formats: TXT, PDF, DOC, DOCX, MD
+                  </p>
+                  <FileUploader userInterests={methods.getValues()} />
+                </div>
               </CardContent>
             </Card>
           </div>
