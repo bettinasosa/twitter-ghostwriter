@@ -3,7 +3,7 @@
 import { connectDB } from "@/lib/services/db"
 import { ScheduledTweet } from "@/lib/models/Schedule"
 import { revalidatePath } from "next/cache"
-import {Tweet} from "lib/models/Tweet"
+import {Tweet} from "@/lib/models/Tweet"
 
 export async function getScheduledTweets(userId: string) : Tweet {
   try {

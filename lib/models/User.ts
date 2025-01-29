@@ -1,16 +1,5 @@
 import { z } from "zod"
-
-// Define the base schemas
-export const TweetTypeSchema = z.enum(["short-form", "thread", "long-form"])
-export type TweetType = z.infer<typeof TweetTypeSchema>
-
-export const TweetSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  content: z.union([z.string(), z.array(z.string())]),
-  type: TweetTypeSchema
-})
-export type Tweet = z.infer<typeof TweetSchema>
+import { ObjectId } from "mongodb"
 
 export const UserInterestsSchema = z.object({
   topics: z.array(z.string()),
@@ -20,25 +9,34 @@ export const UserInterestsSchema = z.object({
   postingFrequency: z.string(),
   aiPersona: z.string(),
   aiBackstory: z.string(),
-  humorLevel: z.number().min(0).max(100),
+  humorLevel: z.number(),
   emojiUsage: z.enum(["none", "minimal", "moderate", "liberal"]),
   hashtagPreference: z.enum(["none", "minimal", "moderate", "liberal"]),
   preferredWritingStyles: z.array(z.string()),
   twitterHandle: z.string()
 })
 
-// Update User schema to include auth fields
 export const UserSchema = z.object({
-  _id: z.string(),
+  _id: z.instanceof(ObjectId),
+  id: z.string(), // UI friendly ID
   email: z.string().email(),
   password: z.string(),
+  userInterests: UserInterestsSchema.nullable(),
   created_at: z.date(),
-  updated_at: z.date(),
-  userInterests: UserInterestsSchema.nullable()
+  updated_at: z.date()
 })
 
 export type UserInterests = z.infer<typeof UserInterestsSchema>
 export type User = z.infer<typeof UserSchema>
 
-// Helper type for creating a new user
-export type CreateUserInput = Omit<User, '_id' | 'created_at' | 'updated_at'>
+export function mapUserFromDB(doc: any): User {
+  return {
+    _id: doc._id,
+    id: doc._id.toString(),
+    email: doc.email,
+    password: doc.password,
+    userInterests: doc.userInterests,
+    created_at: new Date(doc.created_at),
+    updated_at: new Date(doc.updated_at)
+  }
+}

@@ -1,5 +1,6 @@
 "use client"
 
+import { Tweet, ScheduledTweet } from "@/lib/models/Tweet"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { CopyableTextBox } from "@/components/copyable-text-box"
@@ -11,13 +12,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { Edit, Save, X, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { useAppContext } from "@/lib/AppContext"
+import { useTweets } from "@/lib/TweetsContext"
 import { format } from "date-fns"
 
 export default function TweetPage() {
   const params = useParams()
   const router = useRouter()
-  const { tweets, setTweets, scheduledTweets } = useAppContext()
+  const { tweets, setTweets, scheduledTweets } = useTweets()
   const [tweet, setTweet] = useState<Tweet | undefined>(undefined)
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState("")
@@ -38,7 +39,7 @@ export default function TweetPage() {
   }, [params.id, tweets])
 
   useEffect(() => {
-    const scheduledTweet = scheduledTweets.find(t => t.id === params.id)
+    const scheduledTweet = scheduledTweets.find(t => t.id === params.id) as ScheduledTweet
     if (scheduledTweet) {
       setScheduledDate(scheduledTweet.scheduledDate)
     }

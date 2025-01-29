@@ -1,11 +1,14 @@
-'use client'
+"use client"
 
-import { createContext, useContext, useState } from "react"
-import { Tweet, SavedTweet } from "./models/Tweet"
+import { createContext, useContext, useState, useEffect } from "react"
+import { Tweet, SavedTweet, mapTweetFromDB } from "./models/Tweet"
+import { useAuth } from "./AuthContext"
+import { getScheduledTweets } from "@/app/actions/schedule"
 
 interface TweetsContextType {
   tweets: Tweet[]
   savedTweets: SavedTweet[]
+  scheduledTweets: Tweet[]
   addTweet: (tweet: Omit<Tweet, "id">) => void
   deleteTweet: (id: string) => void
   saveTweet: (tweet: Tweet) => void
@@ -19,6 +22,24 @@ const TweetsContext = createContext<TweetsContextType | undefined>(undefined)
 export function TweetsProvider({ children }: { children: React.ReactNode }) {
   const [tweets, setTweets] = useState<Tweet[]>([])
   const [savedTweets, setSavedTweets] = useState<SavedTweet[]>([])
+  const [scheduledTweets, setScheduledTweets] = useState<Tweet[]>([])
+  const { user } = useAuth()
+
+  useEffect(() => {
+    const loadScheduledTweets = async () => {
+      if (user?.id) {
+        try {
+          const dbTweets = await getScheduledTweets(user.id)
+          const mappedTweets = dbTweets.map(mapTweetFromDB)
+          setScheduledTweets(mappedTweets)
+        } catch (error) {
+          console.error("Error loading scheduled tweets:", error)
+        }
+      }
+    }
+
+    loadScheduledTweets()
+  }, [user?.id])
 
   const addTweet = (newTweet: Omit<Tweet, "id">) => {
     const tweet: Tweet = {
@@ -50,6 +71,7 @@ export function TweetsProvider({ children }: { children: React.ReactNode }) {
       value={{
         tweets,
         savedTweets,
+        scheduledTweets,
         addTweet,
         deleteTweet,
         saveTweet,
@@ -69,4 +91,4 @@ export const useTweets = () => {
     throw new Error("useTweets must be used within a TweetsProvider")
   }
   return context
-} 
+}
